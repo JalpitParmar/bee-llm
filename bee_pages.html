@@ -1,0 +1,302 @@
+<!-- Bee pages: #research (3D model + how Bee was built) and #benchmark (live charts). Injected by app.py before </body>. -->
+<style>
+.bp{display:none;position:fixed;inset:0;z-index:45;overflow-y:auto;background:radial-gradient(circle at 20% 20%,#f5f3ff 0%,#eef0f7 45%,#e6e9f2 100%);-webkit-overflow-scrolling:touch}
+.bp.open{display:block}
+.bp-w{max-width:1040px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
+.bp-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:18px;margin-bottom:18px}
+.bp-top{overflow-x:auto;white-space:nowrap}.bp-top b{flex:1;font-weight:800;min-width:60px}.bp-top a,.bp-top button{flex:none;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;color:#3f3f46;cursor:pointer}
+.bp-chip{display:inline-block;padding:4px 11px;margin:3px 4px 3px 0;border-radius:999px;font-size:12px;font-weight:700;background:rgba(94,92,230,.12);color:#4340c9}
+.bp-ct{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid rgba(0,0,0,.07);font-size:14px}.bp-ct:first-of-type{border-top:0}.bp-ct span{width:92px;color:#71717a;font-size:12.5px}.bp-ct a{color:#5e5ce6;font-weight:700;word-break:break-all}
+.bp-warn{border-left:4px solid #f59e0b;background:rgba(245,158,11,.12)}.bp-pol h2{font-size:17px}.bp-pol li{margin:4px 0}
+.bp-top a.on{background:#5e5ce6;color:#fff}
+.bp h1{font-size:clamp(28px,5vw,46px);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:6px 0 8px}
+.bp h2{font-size:20px;font-weight:800;margin:28px 0 10px}.bp p.sub{color:#52525b;max-width:720px}
+.bp-card{border-radius:22px;padding:16px 18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.85);box-shadow:0 10px 30px -14px rgba(60,40,140,.25)}
+.bp-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.bp-stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.bp-stat{padding:8px 14px;border-radius:14px;background:rgba(255,255,255,.7);font-size:12px;color:#71717a}.bp-stat b{display:block;font-size:19px;color:#18181b}
+.bp-card h3{font-size:15px;font-weight:800;margin:0 0 6px;display:flex;gap:8px;align-items:center}
+.bp-card h3 i{font-style:normal;background:#5e5ce6;color:#fff;border-radius:999px;width:24px;height:24px;display:grid;place-items:center;font-size:12px}
+.bp-card ul{margin:0;padding-left:18px;font-size:13.5px;color:#3f3f46;line-height:1.55}.bp-card li{margin:3px 0}
+.bp code{background:rgba(94,92,230,.1);padding:1px 6px;border-radius:6px;font-size:12px;color:#4340c9}
+#bp3d{position:relative;height:min(62vh,500px);min-height:360px;border-radius:24px;overflow:hidden;cursor:grab;touch-action:pan-y;background:linear-gradient(180deg,#1b1340,#3a1d6e 60%,#6b2d8f)}
+#bp3d:active{cursor:grabbing}#bp3d canvas{display:block}
+.bp-ctl{position:absolute;right:10px;top:10px;display:flex;gap:6px;z-index:2}.bp-ctl button{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;background:rgba(255,255,255,.9);cursor:pointer}
+.bp-leg{position:absolute;left:12px;bottom:10px;z-index:2;color:#e9e4ff;font-size:11.5px;display:flex;gap:12px;flex-wrap:wrap}.bp-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+#bpinfo{margin-top:10px;font-size:13.5px;color:#3f3f46;min-height:58px}
+.bp-bar{display:flex;height:16px;border-radius:9px;overflow:hidden;margin:8px 0}.bp-bar span{height:100%}
+.bp-key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:#52525b}.bp-key i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}
+.bp-note{font-size:12px;color:#71717a;margin-top:8px}
+.bp-row{display:grid;grid-template-columns:112px 1fr;gap:10px;align-items:center;font-size:12.5px;margin:7px 0}.bp-row>span{color:#52525b;text-align:right}
+.bp-tr{position:relative}.bp-b{height:12px;border-radius:6px;margin:2px 0;width:0;transition:width .9s cubic-bezier(.2,.8,.2,1);position:relative}
+.bp-b em{position:absolute;left:calc(100% + 6px);top:-2px;font-style:normal;font-size:11px;color:#3f3f46;white-space:nowrap}
+.bp-ch{position:absolute;top:-2px;bottom:-2px;width:2px;background:#18181b;border-radius:2px}
+.bp-lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:#52525b;margin-bottom:6px}.bp-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.bp-cols{display:flex;align-items:flex-end;gap:22px;height:220px;padding-top:20px;overflow-x:auto}.bp-g{flex:1;min-width:130px;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+.bp-gb{display:flex;align-items:flex-end;gap:3px;height:100%;width:100%}.bp-gb div{flex:1;border-radius:6px 6px 0 0;height:0;transition:height .9s cubic-bezier(.2,.8,.2,1);position:relative}
+.bp-gb em{position:absolute;top:-16px;left:0;right:0;text-align:center;font-style:normal;font-size:11px;color:#3f3f46}
+.bp table{width:100%;border-collapse:collapse;font-size:13px}.bp th{text-align:left;color:#71717a;font-size:11.5px;padding:6px 8px}.bp td{padding:8px;border-top:1px solid rgba(0,0,0,.07)}
+.bp tr.me td{background:rgba(245,163,11,.14);font-weight:700}
+</style>
+
+<div id="research-view" class="bp"><div class="bp-w">
+ <div class="bp-top apple-liquid-glass" data-nav="research"></div>
+ <h1>How Bee was built, end to end</h1>
+ <p class="sub">An 80M-parameter language model trained from scratch on a single Colab GPU: data, tokenizer, pretraining, two SFT stages and a tool-calling stage. Drag the model to rotate it, tap a layer to inspect it.</p>
+ <div class="bp-stats" id="bpstats"></div>
+
+ <div id="bp3d">
+  <div class="bp-ctl"><button data-x>Explode</button><button data-r>Pause</button></div>
+  <div class="bp-leg"><span><i style="background:#ff6fb5"></i>Embedding / tied head</span><span><i style="background:#8b6cff"></i>Query heads (10)</span><span><i style="background:#35d0e6"></i>KV heads (2)</span><span><i style="background:#ffb02e"></i>SwiGLU FFN</span></div>
+ </div>
+ <div id="bpinfo" class="bp-card">Tap any layer. 14 identical blocks, each: RMSNorm → grouped-query attention → RMSNorm → SwiGLU feed-forward, with residual connections. Glowing dots are tokens flowing upward.</div>
+
+ <h2>1 · Data: what we collected and how much</h2>
+ <div class="bp-card">
+  <h3>Pretraining corpus: 2,470,701 documents · 4.9 GB · ≈1.27B tokens</h3>
+  <div class="bp-bar" id="bpsrc"></div><div class="bp-key" id="bpkey"></div>
+  <p class="bp-note">Bar = share of documents. Token budgets set per source (chars ÷ 4): Wikipedia 600M, Books 600M, Code 300M, Stories 200M, Jokes 5M, Poems 5M. Books is few documents but very long ones.</p>
+ </div>
+ <div class="bp-grid" style="margin-top:12px">
+  <div class="bp-card"><h3>Sources</h3><ul><li>Wikipedia (20231101 English dump), Project Gutenberg books, CodeParrot-clean (Python), TinyStories, short jokes, Gutenberg poetry</li><li>Each source: download to local disk → extract and filter → write small <code>.jsonl</code> to Drive → delete raw files</li></ul></div>
+  <div class="bp-card"><h3>Cleaning</h3><ul><li>Drop text under 20 characters; code files over 8,000 characters</li><li>Collapse whitespace; MD5 de-duplication on normalised text</li><li>Profanity filter on jokes, poems and chat data (LDNOOBW list + better-profanity)</li></ul></div>
+  <div class="bp-card"><h3>SFT (chat) data: 450,034 examples · 738 MB</h3><ul><li>SQuAD Q&amp;A (87,448), OpenAssistant (47,257 pairs + 16,702 multi-turn threads), Dolly (14,403)</li><li>Plus GSM8K, no_robots, CNN/DailyMail and SAMSum summaries, Orca system prompts, Python instructions, WritingPrompts, SST-2, CommonsenseQA</li><li>25 hand-written persona chats and 60 refusal / clarify pairs ("I can't see live scores")</li></ul></div>
+  <div class="bp-card"><h3>Also collected</h3><ul><li>172,706 DPO preference pairs (hh-rlhf 159,849 · Orca 12,857)</li><li>16,710 reasoning traces (Bespoke-Stratos, ≈70M tokens)</li><li>The notebooks shared here do not train on these two sets.</li></ul></div>
+ </div>
+
+ <h2>2 · Tokenizer</h2>
+ <div class="bp-grid">
+  <div class="bp-card"><h3><i>T</i>SentencePiece BPE · 32,000 tokens</h3><ul><li><code>byte_fallback</code> on and full character coverage: any text encodes, no <code>&lt;unk&gt;</code> loss</li><li>Trained on 1,479,003 lines (2.2 GB): all SFT, reasoning and DPO text plus every 5th pretraining document</li><li>Special tokens are atomic: <code>&lt;|user|&gt;</code>=4 <code>&lt;|assistant|&gt;</code>=5 <code>&lt;|system|&gt;</code>=6 <code>&lt;|end|&gt;</code>=7</li></ul></div>
+  <div class="bp-card"><h3><i>σ</i>Sizing the model</h3><ul><li>Chinchilla rule of thumb ≈ 20 tokens per parameter: 1.28B tokens → ≈64M params (range 32–96M)</li><li>Chose ≈80M: 14 layers, d_model 640. The 32k × 640 embedding alone is 20.5M, tied with the output head</li></ul></div>
+  <div class="bp-card"><h3><i>▦</i>Binary shards</h3><ul><li>Text → token ids stored as <code>uint16</code> memory-mapped <code>.bin</code> files</li><li>Pretrain: 1,270,360,340 train + 6,383,721 val tokens (0.5%)</li><li>SFT: 173,846,113 train + 873,599 val tokens</li></ul></div>
+ </div>
+
+ <h2>3 · Training, stage by stage</h2>
+ <div class="bp-grid">
+  <div class="bp-card"><h3><i>1</i>Pretraining · 20,000 steps</h3><ul><li>TensorFlow/Keras, float32 (mixed precision gave NaNs), single Colab T4</li><li>Batch 16 × 4 accumulation × 512 tokens = 65,536 tokens/step → 1.31B tokens, ≈1.03 epochs</li><li>AdamW (β 0.9/0.95, wd 0.1), LR 1e-4 → 1e-5, 500 warm-up steps cosine decay, grad-clip 1.0, NaN guard</li><li>Val loss 6.26 → <b>2.847</b> best at step 18,250. Colab restarts caused gaps in the log (see Benchmark)</li></ul></div>
+  <div class="bp-card"><h3><i>2</i>SFT stage 1 · chat format</h3><ul><li>PyTorch, <code>torch.compile</code>, fp16 autocast, starting from the pretrained weights</li><li>Format <code>&lt;|user|&gt; … &lt;|end|&gt; &lt;|assistant|&gt; … &lt;|end|&gt;</code>; loss only on assistant tokens</li><li>8,000 steps ≈ 1.5 epochs of 173.8M tokens, 64 sequences/step, LR 1e-4 → 1e-5</li><li>Best val loss <b>2.689</b> at step 6,600; it flattened at ≈2.70 afterwards</li></ul></div>
+  <div class="bp-card"><h3><i>3</i>SFT stage 2 · identity and facts patch</h3><ul><li>300 steps from the stage 1 best, LR 3e-5 → 3e-6</li><li>Every batch: 50% new (identity, capitals, abbreviations, simple maths, live-data refusals), 50% old chat data to avoid forgetting</li><li>New-data loss 2.68 → 1.35 within 25 steps; "Who made you?" now answers "Jalpit"</li></ul></div>
+  <div class="bp-card"><h3><i>4</i>Tool-calling SFT</h3><ul><li>Data: 14,000 synthetic examples with exact tool results (8 tools: calculator, weather, time, units, web search, reminder, random number, days between) + Glaive function-calling. After dropping rows over 512 tokens: 16,779 examples, 13,555 with a call</li><li>Format: <code>&lt;tool_call&gt;{"name":…,"arguments":{…}}&lt;/tool_call&gt;</code>, result returned in <code>&lt;tool_response&gt;</code>, then Bee writes the answer</li><li>3,000 steps, 60% tool data / 40% old chat data, LR 5e-5 → 5e-6. Tool val loss 2.74 → 0.14; best checkpoint chosen at step 2,500</li><li>Held-out synthetic test: 100% valid JSON, 100% right tool, <b>95.8%</b> right tool + arguments, 100% correct "no tool needed". Remaining errors are digit slips (<code>429/12</code> for 429/11)</li></ul></div>
+  <div class="bp-card"><h3><i>5</i>Serving</h3><ul><li>Flask app, KV-cache generation (self-tested against the full forward pass), 512-token window</li><li>Tool calls decoded greedily; tools run safely server-side (AST calculator, Open-Meteo weather, DuckDuckGo / Wikipedia search)</li><li>Small model, so the app drops old turns and limits each visitor to a daily token budget</li></ul></div>
+ </div>
+ <p class="bp-note" style="margin-top:14px">Honest summary: behaviour (identity, format, tool calling) is learned well; world knowledge and arithmetic are not. At 80M parameters and ≈1.3B tokens that is expected.</p>
+</div></div>
+
+<div id="benchmark-view" class="bp"><div class="bp-w">
+ <div class="bp-top apple-liquid-glass" data-nav="benchmark"></div>
+ <h1>How good is an 80M model, really?</h1>
+ <p class="sub">Zero-shot, lm-eval-style log-likelihood scoring. Black ticks mark random guessing, so you can see where Bee is above chance and where it is not.</p>
+
+ <h2>Standard benchmarks</h2>
+ <div class="bp-card"><div class="bp-lg"><span><i style="background:#f59e0b"></i>Bee base (pretrained)</span><span><i style="background:#b45309"></i>Bee after SFT</span><span><i style="background:#18181b"></i>Chance</span></div><div id="bm1"></div>
+  <p class="bp-note">BoolQ chance = always answering "yes" (62%). HellaSwag, ARC and OpenBookQA use acc_norm; others acc. LAMBADA chance ≈ 0%.</p></div>
+
+ <h2>Versus similar-size open models</h2>
+ <div class="bp-card"><div class="bp-lg" id="bm2k"></div><div class="bp-cols" id="bm2"></div>
+  <p class="bp-note">Peers saw ≈100–200× more data (300B tokens vs ≈1.3B). Peer numbers are published lm-evaluation-harness results; Bee uses its own harness with the same scoring method, so small differences can come from harness versions.</p></div>
+
+ <h2>126 fixed questions, none in the training data</h2>
+ <div class="bp-card"><div id="bm3"></div><p class="bp-note">Greedy decoding, automatic scoring. Overall 25/126 (20%). Behaviour is learned; facts and maths are not.</p></div>
+
+ <h2>Pretraining loss</h2>
+ <div class="bp-card"><div id="bm4"></div><p class="bp-note">Values read off the logged validation curve (±0.03). Dashed = stretches lost to Colab restarts, not real data. Best validation loss 2.847 at step 18,250.</p></div>
+
+ <h2>Scale gap</h2>
+ <div class="bp-card" style="overflow-x:auto"><table>
+  <tr><th>Model</th><th>Parameters</th><th>Training data</th><th>Context</th><th>Weights</th></tr>
+  <tr class="me"><td>Bee (mine)</td><td>80M</td><td>≈1.3B tokens</td><td>512</td><td>Own, from scratch</td></tr>
+  <tr><td>DeepSeek V4-Pro</td><td>1.6T total (49B active, MoE)</td><td>32T+ tokens</td><td>1M</td><td>Open (MIT)</td></tr>
+  <tr><td>ChatGPT · Gemini · Claude</td><td colspan="2">Not disclosed</td><td>See model cards</td><td>Closed</td></tr></table>
+  <p class="bp-note">≈20,000× the parameters and ≈25,000× the tokens of Bee. DeepSeek figures are as listed in the project's comparison table (model card, Apr 2026). Bee is not built to compete; it is built to understand every layer of an LLM.</p></div>
+</div></div>
+
+
+<div id="about-view" class="bp"><div class="bp-w">
+ <div class="bp-top apple-liquid-glass" data-nav="about"></div>
+ <h1>About us</h1>
+ <p class="sub">Bee is a learning project by <b id="me-name"></b>: a language model built from scratch to understand every layer of an LLM, from data and tokenizer to pretraining, fine-tuning and tool calling.</p>
+ <div class="bp-grid" style="margin-top:14px">
+  <div class="bp-card"><h3>Who I am</h3><ul>
+   <li>Founder and builder: web development, app development and AI solutions</li>
+   <li>Long-term goal: AI tools and my own LLMs</li>
+   <li>Freelance web developer since 2025 (PHP, MySQL, Bootstrap, JavaScript)</li>
+   <li>Based in Rajkot, Gujarat, India</li></ul></div>
+  <div class="bp-card"><h3>Contact</h3><div id="me-contact"></div></div>
+  <div class="bp-card"><h3>Education</h3><ul>
+   <li><b>MCA</b>, Marwadi University (expected 2028)</li>
+   <li><b>BCA</b>, Marwadi University, 2023 to 2026, CGPA 8.15</li></ul>
+   <h3 style="margin-top:12px">Certifications</h3><ul><li>Infosys Springboard: Python, Software Engineering, Software Development and Testing</li></ul></div>
+  <div class="bp-card"><h3>Projects</h3><ul>
+   <li><b>Bee</b>: 80M-parameter LLM from scratch (SentencePiece, pretraining, SFT, tool calling). <a href="#research" style="color:#5e5ce6;font-weight:700">See the research</a></li>
+   <li><b>Bhakti Institute</b>: website and Student Management System (freelance)</li>
+   <li><b>Bhoomi Trade Line</b>: client website (freelance)</li>
+   <li><b>Bhudev VIP Number</b>: VIP number sales site with admin panel (freelance)</li></ul></div>
+ </div>
+ <div class="bp-card" style="margin-top:12px"><h3>Skills</h3><div id="me-skills"></div></div>
+ <p class="bp-note" style="margin-top:14px">Looking for Data Science, AI/ML or Web Development roles, and open to freelance work. Please read the <a href="#privacy" style="color:#5e5ce6;font-weight:700">privacy policy</a> before using the chat.</p>
+</div></div>
+
+<div id="privacy-view" class="bp"><div class="bp-w bp-pol">
+ <div class="bp-top apple-liquid-glass" data-nav="privacy"></div>
+ <h1>Privacy Policy</h1>
+ <p class="sub">Last updated: November 7, 2026</p>
+ <div class="bp-card bp-warn" style="margin-top:14px"><b>For learning purposes only.</b> Bee is an educational experiment (an 80M-parameter model trained on a single GPU). It is <b>not</b> a product, and <b>you cannot use this model in production</b>: not in any commercial service, customer-facing app, or decision that affects people, money, health, safety or legal matters. It is often wrong, and nothing it says should be relied on.</div>
+
+ <h2>1. What this site is</h2>
+ <p class="sub">A personal demo of a small language model. There are no accounts, no ads, and no selling or sharing of data for marketing. It is run by <span class="me-name"></span> for study and portfolio use.</p>
+
+ <h2>2. What is collected when you chat</h2>
+ <ul>
+  <li><b>Your messages and Bee's answers</b>, plus the model used, tools called, token count, time, and whether it was a retry. The site owner can read these in an admin panel. <b>Do not type personal, confidential or sensitive information.</b></li>
+  <li><b>An anonymous visitor ID</b> in a signed cookie (up to 1 year), used only to apply the usage limit (2,000 tokens per visitor per 12 hours) and to group your chats in the logs. It is not linked to your name.</li>
+  <li><b>Your IP address</b> is used briefly in memory to slow down repeated admin-login attempts. It is not saved in the chat logs.</li>
+  <li><b>Browser storage:</b> your settings (model, tools, creativity, length) are kept in your browser's localStorage. Your conversation itself stays in the page and is not saved there.</li>
+ </ul>
+
+ <h2>3. Third parties</h2>
+ <ul>
+  <li><b>Web search tool:</b> your query is sent to DuckDuckGo, or Wikipedia as a fallback. <b>Weather tool:</b> the city name goes to Open-Meteo. These services have their own policies.</li>
+  <li><b>Page assets</b> load from Tailwind CDN, Google Fonts and cdnjs (Three.js), which can see your IP address and browser details like any website you visit.</li>
+  <li>Your text is processed by the model on the owner's own machine. It is not sent to an AI company.</li>
+ </ul>
+
+ <h2>4. Retention and deletion</h2>
+ <p class="sub">Logs are kept in a file on the owner's server until deleted. To have your chats removed, contact the owner (see <a href="#about" style="color:#5e5ce6;font-weight:700">About</a>) with the time of your chat, since logs are tied to an anonymous ID and not to you. You can also clear your cookies and site data at any time.</p>
+
+ <h2>5. Limits of the model</h2>
+ <ul>
+  <li>Bee can be wrong, make things up, and repeat itself. In the owner's own test it answered only about 20% of fixed questions correctly.</li>
+  <li>It must not be used for medical, legal, financial or safety advice.</li>
+  <li>The model weights and this site are provided as is, with no warranty, and are not licensed for production or commercial use.</li>
+ </ul>
+
+ <h2>6. Children</h2>
+ <p class="sub">The site is not directed at children under 13. Please do not enter anyone's personal information.</p>
+
+ <h2>7. Changes</h2>
+ <p class="sub">This page may change as the project changes. The date at the top shows the latest version.</p>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+/* ======== EDIT YOUR DETAILS HERE (empty rows are hidden) ======== */
+const ME={name:'Jalpit Parmar',email:'jalpitparmar646@gmail.com',phone:'9824623646',linkedin:'https://www.linkedin.com/in/jalpit-parmar-649b032b3/'};   // linkedin: full URL, e.g. 'https://www.linkedin.com/in/yourname'   // linkedin: full URL, e.g. 'https://www.linkedin.com/in/yourname'   // linkedin: full URL, e.g. 'https://www.linkedin.com/in/yourname'
+const SKILLS=['Python','PHP','JavaScript','Java','TensorFlow','Keras','Scikit-learn','NumPy','Pandas','Matplotlib','HTML','CSS','Bootstrap','Next.js','SQL','MongoDB','Git','GitHub','Flask','React'];
+/* ================================================================ */
+const q=id=>document.getElementById(id), V={research:q('research-view'),benchmark:q('benchmark-view'),about:q('about-view'),privacy:q('privacy-view')};
+let T=null,drawn=false;
+const NAV=[['research','Research'],['benchmark','Benchmark'],['about','About us'],['privacy','Privacy']];
+document.querySelectorAll('.bp-top').forEach(t=>{t.innerHTML='<b>\u{1F41D} Bee</b>'+NAV.map(n=>'<a href="#'+n[0]+'"'+(n[0]===t.dataset.nav?' class="on"':'')+'>'+n[1]+'</a>').join('')+'<button class="apple-liquid-pill" data-close>\u2715 Close</button>'});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.querySelectorAll('#me-name,.me-name').forEach(e=>e.textContent=ME.name);
+const CT=[['Email',ME.email&&'<a href="mailto:'+esc(ME.email)+'">'+esc(ME.email)+'</a>'],['Phone',ME.phone&&'<a href="tel:'+esc(ME.phone.replace(/[^\d+]/g,''))+'">'+esc(ME.phone)+'</a>'],['LinkedIn',ME.linkedin&&'<a href="'+esc(ME.linkedin)+'" target="_blank" rel="noopener">'+esc(ME.linkedin.replace(/^https?:\/\/(www\.)?/,''))+'</a>'],['Resume','<a href="/resume" target="_blank">Download resume</a>'],['Location','Rajkot, Gujarat, India']].filter(r=>r[1]);
+q('me-contact').innerHTML=CT.map(r=>'<div class="bp-ct"><span>'+r[0]+'</span><div>'+r[1]+'</div></div>').join('');
+q('me-skills').innerHTML=SKILLS.map(s=>'<span class="bp-chip">'+esc(s)+'</span>').join('');
+
+/* ---------- routing: #research / #benchmark ---------- */
+function route(){
+  const h=location.hash.slice(1);
+  for(const k in V)V[k].classList.toggle('open',k===h);
+  document.body.style.overflow=V[h]?'hidden':'';
+  if(V[h])V[h].scrollTop=0;
+  if(h==='research')start3D();
+  if(h==='benchmark')bench();
+}
+function go(h){location.hash=h;const m=q('mnav');if(m)m.style.display='none'}
+document.querySelectorAll('a[href="#research"],a[href="#benchmark"],a[href="#about"],a[href="#privacy"]').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.getAttribute('href'))});
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{history.replaceState(null,'',location.pathname+location.search);route()});
+addEventListener('hashchange',route);
+
+/* ---------- research: stats + data bar ---------- */
+q('bpstats').innerHTML=[['80.7M','parameters'],['14','layers'],['32,000','vocab'],['512','context'],['1.27B','pretrain tokens'],['20,000','pretrain steps']].map(x=>'<div class="bp-stat"><b>'+x[0]+'</b>'+x[1]+'</div>').join('');
+const SRC=[['Stories (TinyStories)',841695,'#ffb02e'],['Wikipedia',791747,'#5e5ce6'],['Poems',509934,'#ff6fb5'],['Jokes',200707,'#35d0e6'],['Code',122961,'#16a34a'],['Books',3657,'#18181b']],TOT=SRC.reduce((a,s)=>a+s[1],0);
+q('bpsrc').innerHTML=SRC.map(s=>'<span title="'+s[0]+'" style="width:'+Math.max(s[1]/TOT*100,.6)+'%;background:'+s[2]+'"></span>').join('');
+q('bpkey').innerHTML=SRC.map(s=>'<span><i style="background:'+s[2]+'"></i>'+s[0]+' '+s[1].toLocaleString()+' ('+(s[1]/TOT*100).toFixed(1)+'%)</span>').join('');
+
+/* ---------- research: Three.js model ---------- */
+function start3D(){
+  if(T){if(!T.on){T.on=true;T.loop()}return}
+  if(!window.THREE){q('bp3d').insertAdjacentHTML('beforeend','<p style="color:#fff;padding:20px">Three.js could not load (offline?).</p>');return}
+  const el=q('bp3d');let ren;
+  try{ren=new THREE.WebGLRenderer({antialias:true,alpha:true})}catch(e){el.insertAdjacentHTML('beforeend','<p style="color:#fff;padding:20px">WebGL is not available in this browser.</p>');return}
+  ren.setPixelRatio(Math.min(devicePixelRatio||1,2));el.prepend(ren.domElement);
+  const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,1,.1,100);
+  sc.add(new THREE.AmbientLight(0xffffff,.8));const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(6,12,9);sc.add(dl);
+  const root=new THREE.Group();sc.add(root);root.rotation.y=.6;
+  const N=14,GAP=.66,Y0=1.5,layers=[],picks=[];
+  const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.35,metalness:.2,emissive:0x000000});
+  function box(par,w,h,d,c,x,y,z,info,li){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.userData={info,li};par.add(m);picks.push(m);return m}
+  const emb=box(root,5.8,.55,2.8,0xff6fb5,0,.4,0,'<b>Token embedding</b> · 32,000 × 640 = 20,480,000 parameters (25% of the model). The same matrix is reused as the output head (tied weights), so the model has no separate output layer.',-1);
+  const per='4,302,080';
+  for(let i=0;i<N;i++){
+    const g=new THREE.Group();g.userData.base=Y0+i*GAP;g.position.y=g.userData.base;root.add(g);layers.push(g);g.userData.m=[];
+    const info='<b>Block '+(i+1)+' of 14</b> · RMSNorm → grouped-query attention (10 query heads sharing 2 KV heads, head_dim 64, RoPE positions) → residual → RMSNorm → SwiGLU feed-forward (640 → 1728 → 640) → residual. '+per+' parameters per block (attention 983,040 · FFN 3,317,760).';
+    g.userData.m.push(box(g,5.2,.16,2.4,0x6a4cd6,0,.17,0,info,i));
+    for(let k=0;k<10;k++)g.userData.m.push(box(g,.3,.2,.3,0x8b6cff,-2.25+k*.5,.33,.6,info,i));
+    for(let k=0;k<2;k++)g.userData.m.push(box(g,.5,.2,.5,0x35d0e6,-1.25+k*2.5,.33,-.6,info,i));
+    g.userData.m.push(box(g,5.6,.2,2.6,0xffb02e,0,-.1,0,info,i));
+  }
+  const topY=Y0+N*GAP;
+  box(root,5.2,.14,2.4,0x4ade80,0,topY,0,'<b>Final RMSNorm</b> · 640 parameters. Normalises the last hidden state before the output projection.',-1);
+  box(root,5.8,.4,2.8,0xff6fb5,0,topY+.45,0,'<b>Output head (tied)</b> · hidden state × embedding matrixᵀ → 32,000 logits → next-token probabilities. Total model: 80,709,760 parameters.',-1);
+  const NP=170,pg=new THREE.BufferGeometry(),pp=new Float32Array(NP*3),sp=new Float32Array(NP);
+  for(let i=0;i<NP;i++){pp[i*3]=(Math.random()-.5)*4.8;pp[i*3+1]=Math.random()*(topY+.6);pp[i*3+2]=(Math.random()-.5)*2.2;sp[i]=.012+Math.random()*.02}
+  pg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+  root.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0xffd27a,size:.14,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false})));
+  let ex=0,exT=0,auto=true,sel=-2,drag=null,moved=0;
+  const ray=new THREE.Raycaster(),mv=new THREE.Vector2();
+  function size(){const w=el.clientWidth,h=el.clientHeight;ren.setSize(w,h);cam.aspect=w/h;cam.position.set(0,topY*.5+.4,w<560?27:19.5);cam.lookAt(0,topY*.5,0);cam.updateProjectionMatrix()}
+  addEventListener('resize',size);size();
+  function glow(li,on){(li>=0?layers[li].userData.m:[emb]).forEach(m=>m.material.emissive.setHex(on?0x4a3a9a:0))}
+  el.addEventListener('pointerdown',e=>{drag=e.clientX;moved=0});
+  addEventListener('pointerup',e=>{
+    if(drag===null)return;drag=null;if(moved>4)return;
+    const r=ren.domElement.getBoundingClientRect();mv.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);
+    ray.setFromCamera(mv,cam);const h=ray.intersectObjects(picks,false)[0];
+    if(sel>=0)glow(sel,false);if(sel===-1)glow(-1,false);
+    if(h){const li=h.object.userData.li;sel=li;if(li>=0)glow(li,true);q('bpinfo').innerHTML=h.object.userData.info}
+  });
+  addEventListener('pointermove',e=>{if(drag===null)return;const dx=e.clientX-drag;drag=e.clientX;moved+=Math.abs(dx);root.rotation.y+=dx*.01});
+  el.querySelector('[data-x]').onclick=e=>{exT=exT?0:1;e.target.textContent=exT?'Collapse':'Explode'};
+  el.querySelector('[data-r]').onclick=e=>{auto=!auto;e.target.textContent=auto?'Pause':'Rotate'};
+  T={on:true,loop(){
+    if(!T.on)return;if(!V.research.classList.contains('open')){T.on=false;return}
+    ex+=(exT-ex)*.08;layers.forEach(g=>g.position.y=g.userData.base*(1+ex*.7)+ex*0);
+    if(auto&&drag===null)root.rotation.y+=.004;
+    const a=pg.attributes.position;for(let i=0;i<NP;i++){let y=a.array[i*3+1]+sp[i];if(y>topY+.7)y=.2;a.array[i*3+1]=y}a.needsUpdate=true;
+    ren.render(sc,cam);requestAnimationFrame(T.loop)}};
+  T.loop();
+}
+
+/* ---------- benchmark charts (plain DOM, no images) ---------- */
+function bench(){
+  if(drawn)return;drawn=true;
+  const A='#f59e0b',B='#b45309',MX=70;
+  const D1=[['HellaSwag',26.9,27.3,25],['ARC-Easy',34.6,35.9,25],['ARC-Challenge',21.7,24.7,25],['PIQA',53.8,55.5,50],['WinoGrande',48.6,48.8,50],['BoolQ',45.3,44.6,62],['OpenBookQA',23.6,23.4,25],['SciQ',55.8,57.8,25],['MMLU',23.0,25.4,25],['LAMBADA',22.3,23.7,0]];
+  q('bm1').innerHTML=D1.map(r=>'<div class="bp-row"><span>'+r[0]+'</span><div class="bp-tr"><div class="bp-b" data-w="'+r[1]/MX*100+'" style="background:'+A+'"><em>'+r[1]+'</em></div><div class="bp-b" data-w="'+r[2]/MX*100+'" style="background:'+B+'"><em>'+r[2]+'</em></div><i class="bp-ch" style="left:'+r[3]/MX*100+'%"></i></div></div>').join('');
+  const P=['Bee 80M (1.3B tok)','Pythia-70M (300B)','Pythia-160M (300B)','GPT-2 124M'],PC=['#f59e0b','#93c5fd','#3b82f6','#1e3a8a'];
+  const D2=[['PIQA',54,60,63,63],['WinoGrande',49,51,51,52],['SciQ',56,65,76,75],['LAMBADA',22,21,37,33]];
+  q('bm2k').innerHTML=P.map((p,i)=>'<span><i style="background:'+PC[i]+'"></i>'+p+'</span>').join('');
+  q('bm2').innerHTML=D2.map(r=>'<div class="bp-g"><div class="bp-gb">'+r.slice(1).map((v,i)=>'<div data-h="'+v/80*100+'" style="background:'+PC[i]+'"><em>'+v+'</em></div>').join('')+'</div><b style="font-size:12px;margin-top:6px">'+r[0]+'</b></div>').join('');
+  const D3=[['Identity',5,6],['Live-data refusal',5,8],['Instructions',3,8],['Reading',3,10],['Capitals',5,20],['"I don\'t know"',1,6],['General knowledge',2,20],['Math',1,40],['Acronyms',0,8]];
+  q('bm3').innerHTML=D3.map(r=>{const p=r[1]/r[2]*100,c=p>=60?'#16a34a':p>=25?'#f59e0b':'#ef4444';return '<div class="bp-row"><span>'+r[0]+'</span><div class="bp-tr"><div class="bp-b" data-w="'+p+'" style="background:'+c+';height:16px"><em>'+Math.round(p)+'% ('+r[1]+'/'+r[2]+')</em></div></div></div>'}).join('');
+  /* loss curve: [step,val], null = gap */
+  const L=[[250,6.26],[500,5.16],[750,4.68],null,[3250,3.37],[3500,3.34],null,[4250,3.26],[5000,3.21],[6000,3.15],[7000,3.15],[8000,3.07],[9000,3.07],[10000,3.03],[10750,2.91],[12000,2.98],[14000,2.93],[16000,2.93],null,[17250,2.86],[18250,2.85],[19000,2.9],[20000,2.87]];
+  const W=760,H=270,pl=44,pr=16,pt=14,pb=30,X=s=>pl+s/20000*(W-pl-pr),Y=v=>pt+(6.4-v)/(6.4-2.6)*(H-pt-pb);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto"><g font-size="11" fill="#71717a">';
+  [3,4,5,6].forEach(v=>s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#0001"/><text x="6" y="'+(Y(v)+4)+'">'+v+'.0</text>');
+  [0,5000,10000,15000,20000].forEach(v=>s+='<text x="'+X(v)+'" y="'+(H-8)+'" text-anchor="middle">'+v+'</text>');
+  s+='</g>';
+  let seg=[],prev=null;const flush=()=>{if(seg.length>1)s+='<polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="'+seg.join(' ')+'"/>';seg=[]};
+  L.forEach(p=>{if(!p){flush();return}if(prev&&seg.length===0)s+='<line x1="'+X(prev[0])+'" y1="'+Y(prev[1])+'" x2="'+X(p[0])+'" y2="'+Y(p[1])+'" stroke="#2563eb" stroke-dasharray="3 4"/>';seg.push(X(p[0])+','+Y(p[1]));prev=p});flush();
+  s+='<circle cx="'+X(18250)+'" cy="'+Y(2.847)+'" r="5" fill="#dc2626"/><text x="'+(X(18250)-130)+'" y="'+(Y(2.847)-14)+'" font-size="12" fill="#dc2626" font-weight="700">best val 2.847 · step 18,250</text></svg>';
+  q('bm4').innerHTML=s;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('#benchmark-view [data-w]').forEach(b=>b.style.width=b.dataset.w+'%');
+    document.querySelectorAll('#benchmark-view [data-h]').forEach(b=>b.style.height=b.dataset.h+'%');
+  }));
+}
+route();
+})();
+</script>
