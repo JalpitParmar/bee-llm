@@ -2,9 +2,8 @@
 """
 Bee Chat - a ChatGPT-style web UI (Flask) for your own LLM.
 
-Files needed (put them next to this app.py, or in ./models/, or pass paths with --tokenizer/--chat/--tool):
+Files needed (put them next to this app.py, or in ./models/, or pass paths with --tokenizer/--tool):
     bee_tokenizer.model
-    sft_stage2.pt        (normal chat model)
     sft_tool_best.pt     (tool-calling model: calculator, weather, time, unit converter, web search, ...)
 
 Install:
@@ -343,7 +342,7 @@ device = torch.device('cpu')
 USER = ASST = END = SYS = EOS = -1
 BANNED = []
 END_BEFORE_ASST = True          # <|user|> q <|end|> <|assistant|> ...  (read from the tool checkpoint when present)
-MODELS = {}                     # 'chat' / 'tools' -> {'model', 'cache_ok', 'step', 'file'}
+MODELS = {}                     # 'tools' -> {'model', 'cache_ok', 'step', 'file'}
 GEN_LOCK = threading.Lock()     # one generation at a time (small local model)
 
 def autocast_ctx():
@@ -417,14 +416,9 @@ def init_engine(args):
     EOS = sp.eos_id()
     BANNED = [i for i in {USER, ASST, SYS, sp.pad_id(), sp.unk_id(), sp.bos_id()} if i is not None and i >= 0]
     print(f'device: {device} | tokenizer: {tok.name} | vocab {sp.get_piece_size()}')
-    for key, name, cli in [('tools', 'sft_tool_best.pt', args.tool), ('chat', 'sft_stage2.pt', args.chat)]:
-        p = find_file(name, cli)
-        if p and p.exists():
-            try: load_model(key, p)
-            except Exception as e: print(f'!! could not load {name}: {e!r}')
-        else:
-            print(f'-- {name} not found, "{key}" model disabled')
-    assert MODELS, 'no model checkpoints found!'
+    p = find_file('sft_tool_best.pt', args.tool)
+    assert p and p.exists(), 'sft_tool_best.pt not found (put it next to app.py or use --tool)'
+    load_model('tools', p)
 
 # =============================================================== prompts
 def encode_messages(tools, msgs, gen_prompt=True):
@@ -533,7 +527,7 @@ def clean_answer(t):
     return t or '(no answer)'
 
 def chat_events(req):
-    key = req.get('model', 'tools')
+    key = 'tools'                                            # the tool model is the only model
     if key not in MODELS:
         yield {'t': 'error', 'v': f'model "{key}" is not loaded'}; return
     entry = MODELS[key]
@@ -762,8 +756,7 @@ def index():
 def info():
     return jsonify({
         'device': str(device),
-        'models': [{'id': 'tools', 'label': 'Bee Tools', 'sub': 'tool calling + web search', 'ok': 'tools' in MODELS},
-                   {'id': 'chat', 'label': 'Bee Chat', 'sub': 'plain chat model', 'ok': 'chat' in MODELS}],
+        'models': [{'id': 'tools', 'label': 'Bee Tools', 'sub': 'tool calling + web search', 'ok': 'tools' in MODELS}],
         'tools': [{'name': n, 'desc': t['description'], 'icon': TOOL_ICONS.get(n, '🔧')} for n, t in SYN.items()],
         'default_tools': DEFAULT_TOOLS, 'seq': SEQ})
 
@@ -777,6 +770,7 @@ def chat():
         assert sum(len(m['text']) for m in msgs) < 40000, 'too much text'
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+    req['model'] = 'tools'                                   # ignore any old client that still asks for 'chat'
     sid = get_sid(); u = usage_info(sid)
     if u['used'] >= u['limit']:
         return jsonify({'error': f"Token limit reached ({u['limit']} tokens). Please come back in {fmt_wait(u['reset_in'])}.", 'limit': True, **u}), 429
@@ -826,7 +820,7 @@ def start_tunnel(port):                                    # optional: public li
 def main():
     ap = argparse.ArgumentParser(description='Bee Chat web UI')
     ap.add_argument('--host', default='127.0.0.1'); ap.add_argument('--port', type=int, default=5000)
-    ap.add_argument('--tokenizer'); ap.add_argument('--chat', help='path to sft_stage2.pt'); ap.add_argument('--tool', help='path to sft_tool_best.pt')
+    ap.add_argument('--tokenizer'); ap.add_argument('--tool', help='path to sft_tool_best.pt')
     ap.add_argument('--cpu', action='store_true'); ap.add_argument('--tunnel', action='store_true')
     args = ap.parse_args()
     init_engine(args)
@@ -1444,7 +1438,7 @@ async function run(text,isRetry){
   b.dots.remove();b.stat.textContent='';busy=false;ctrl=null;setBtn(false);addActions(b,text,nNew,finalText);msgs.scrollTop=msgs.scrollHeight;
 }
 inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();send()}});
-fetch('/api/info').then(r=>r.json()).then(i=>{INFO=i;if(!INFO.models.find(m=>m.id===S.model&&m.ok))S.model=(INFO.models.find(m=>m.ok)||{id:'chat'}).id;applyUI()});
+fetch('/api/info').then(r=>r.json()).then(i=>{INFO=i;if(!INFO.models.find(m=>m.id===S.model&&m.ok))S.model=(INFO.models.find(m=>m.ok)||{id:'tools'}).id;applyUI()});
 fetch('/api/usage').then(r=>r.json()).then(setTok).catch(()=>{});
 </script>
 </body>
